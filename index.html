@@ -2334,8 +2334,15 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
   chamarJsonp(
     url,
     (dados) => {
-      estado.dicionario = (dados.dicionario || []).map((d) => ({ origem: String(d.origem), padronizado: String(d.padronizado) }));
-      estado.similares = (dados.similares || []).map((s) => ({ cidade: String(s.cidade), bairro: String(s.bairro), similar_a: String(s.similar_a) }));
+      estado.dicionario = (dados.dicionario || []).map((d) => ({
+        origem: normalizarTexto(d.origem),
+        padronizado: normalizarTexto(d.padronizado),
+      }));
+      estado.similares = (dados.similares || []).map((s) => ({
+        cidade: String(s.cidade).trim(),
+        bairro: normalizarTexto(s.bairro),
+        similar_a: normalizarTexto(s.similar_a),
+      }));
       estado.realocacoes = (dados.realocacoes || []).map((r) => ({
         timestamp: String(r.timestamp),
         cidade: String(r.cidade),
