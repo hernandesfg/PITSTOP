@@ -770,6 +770,72 @@ body {
 .aviso-vazio p { margin: 0; }
 .aviso-vazio strong { color: var(--amber); }
 
+/* ---------- Mural de avisos ---------- */
+
+.mural-avisos { margin-bottom: 20px; }
+
+.mural-cabecalho { margin-bottom: 14px; }
+.mural-cabecalho .panel-hint { display: block; margin-top: 4px; }
+
+.mural-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.mural-form select {
+  flex: 0 0 220px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.mural-form input {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.mural-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mural-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+}
+.mural-item-tipo { font-weight: 700; white-space: nowrap; }
+.mural-item-msg { color: var(--text-muted); flex: 1; }
+.mural-item-hora { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.mural-item-remover {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+}
+.mural-item-remover:hover { color: var(--danger); }
+.mural-vazio { font-size: 13px; color: var(--text-muted); font-style: italic; padding: 4px 0; }
+
 .aviso-fixo {
   background: var(--danger-dim);
   border: 1px solid var(--danger);
@@ -1416,6 +1482,26 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
       <section id="resultsSection">
 
         <div id="tabPainel" class="tab-panel hidden">
+
+          <div class="panel-card full-width mural-avisos">
+            <div class="mural-cabecalho">
+              <h2 class="panel-title">📣 Mural de avisos</h2>
+              <span class="panel-hint">Pacotes pra sortear, pedido de reforço, problema com rota — qualquer um com acesso à planilha pode avisar aqui.</span>
+            </div>
+
+            <div class="mural-form">
+              <select id="selTipoAviso">
+                <option value="📦 Pacotes pra sortear">📦 Pacotes pra sortear</option>
+                <option value="🙋 Preciso de reforço">🙋 Preciso de reforço</option>
+                <option value="⚠️ Problema com rota">⚠️ Problema com rota</option>
+                <option value="📋 Aviso geral">📋 Aviso geral</option>
+              </select>
+              <input type="text" id="inputDetalheAviso" placeholder="Detalhe (opcional) — ex: gaiola B-7, 12 pacotes" />
+              <button type="button" id="btnEnviarAviso" class="btn-principal">Enviar aviso</button>
+            </div>
+
+            <div id="listaAvisos" class="mural-lista"></div>
+          </div>
 
           <div class="stamp-row hidden" id="summaryCards"></div>
 
@@ -2270,6 +2356,67 @@ function obterUrlSync() {
   return localStorage.getItem(CHAVE_SYNC_URL) || "";
 }
 
+// ---------------------------------------------------------------------------
+// Mural de avisos
+// ---------------------------------------------------------------------------
+
+function renderizarAvisos() {
+  const container = document.getElementById("listaAvisos");
+  if (!container) return;
+  const lista = [...estado.avisos].sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+  if (!lista.length) {
+    container.innerHTML = `<div class="mural-vazio">Nenhum aviso no momento.</div>`;
+    return;
+  }
+  container.innerHTML = lista
+    .map((a) => {
+      const hora = String(a.timestamp || "").slice(11, 16) || String(a.timestamp || "");
+      const msg = a.mensagem ? ` — ${a.mensagem}` : "";
+      return `
+        <div class="mural-item" data-id="${a.id}">
+          <span class="mural-item-hora">${hora}</span>
+          <span class="mural-item-tipo">${a.tipo}</span>
+          <span class="mural-item-msg">${msg}</span>
+          <button type="button" class="mural-item-remover" title="Remover aviso">✕</button>
+        </div>`;
+    })
+    .join("");
+
+  container.querySelectorAll(".mural-item-remover").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const item = e.target.closest(".mural-item");
+      const id = item.dataset.id;
+      estado.avisos = estado.avisos.filter((a) => String(a.id) !== id);
+      salvarEstado();
+      renderizarAvisos();
+      enviarParaSync("remove_aviso", { id });
+    });
+  });
+}
+
+document.getElementById("btnEnviarAviso").addEventListener("click", () => {
+  const tipo = document.getElementById("selTipoAviso").value;
+  const mensagem = document.getElementById("inputDetalheAviso").value.trim();
+  const aviso = {
+    timestamp: agoraDataHoraLocal(),
+    id: Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+    tipo,
+    mensagem,
+  };
+  estado.avisos.push(aviso);
+  salvarEstado();
+  renderizarAvisos();
+  enviarParaSync("add_aviso", aviso);
+  document.getElementById("inputDetalheAviso").value = "";
+});
+
+document.getElementById("inputDetalheAviso").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    document.getElementById("btnEnviarAviso").click();
+  }
+});
+
 function definirStatusSync(situacao, mensagem) {
   const el = document.getElementById("syncStatus");
   if (!el) return;
@@ -2351,10 +2498,17 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
         br: String(r.br),
         motivo: String(r.motivo),
       }));
+      estado.avisos = (dados.avisos || []).map((a) => ({
+        timestamp: String(a.timestamp),
+        id: String(a.id || a.timestamp),
+        tipo: String(a.tipo),
+        mensagem: String(a.mensagem || ""),
+      }));
       salvarEstado();
       renderizarTabelaDicionario();
       renderizarTabelaSimilares();
       renderizarMetricas();
+      renderizarAvisos();
       definirStatusSync("on", "🟢 Sincronizado — " + new Date().toLocaleTimeString("pt-BR"));
     },
     (err) => {
@@ -2398,6 +2552,7 @@ function estadoPadrao() {
     pendentes: [],
     realocacoes: [],
     similares: [],
+    avisos: [],
     ultimoProcessamento: null,
   };
 }
@@ -2412,6 +2567,7 @@ function carregarEstado() {
       pendentes: dados.pendentes || [],
       realocacoes: dados.realocacoes || [],
       similares: dados.similares || [],
+      avisos: dados.avisos || [],
       ultimoProcessamento: dados.ultimoProcessamento || null,
     };
   } catch {
@@ -3627,10 +3783,14 @@ els.inputImportarDados.addEventListener("change", () => {
     document.getElementById("inputSyncUrl").value = urlSalva;
     document.getElementById("btnDesconectarSync").classList.remove("hidden");
     puxarDadosDaSync(false);
+    // atualiza sozinho a cada 60s (dicionário, similares, histórico e avisos),
+    // pra o mural de avisos não depender de alguém dar F5 pra ver aviso novo.
+    setInterval(() => puxarDadosDaSync(false), 60000);
   }
 
   renderizarTabelaDicionario();
   renderizarTabelaSimilares();
+  renderizarAvisos();
   if (estado.ultimoProcessamento) {
     renderizarResultado({
       resumo: estado.ultimoProcessamento.resumo,
