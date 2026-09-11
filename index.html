@@ -1962,16 +1962,48 @@ function definirStatusSync(situacao, mensagem) {
   el.textContent = mensagem;
 }
 
+// Truque de JSONP: contorna a falta de cabeçalho CORS nas respostas do
+// Apps Script pra LEITURA de dados (carregar via <script src="..."> não
+// esbarra em CORS, diferente de fetch()).
+let __contadorJsonp = 0;
+function chamarJsonp(url, aoReceber, aoFalhar) {
+  const nomeCallback = "syncCallback_" + Date.now() + "_" + __contadorJsonp++;
+  const scriptEl = document.createElement("script");
+
+  const tempoLimite = setTimeout(() => {
+    limpar();
+    aoFalhar(new Error("tempo esgotado esperando a planilha responder"));
+  }, 15000);
+
+  function limpar() {
+    clearTimeout(tempoLimite);
+    delete window[nomeCallback];
+    scriptEl.remove();
+  }
+
+  window[nomeCallback] = (dados) => {
+    limpar();
+    aoReceber(dados);
+  };
+  scriptEl.onerror = () => {
+    limpar();
+    aoFalhar(new Error("falha ao carregar a URL (confira se está certa)"));
+  };
+
+  const separador = url.includes("?") ? "&" : "?";
+  scriptEl.src = `${url}${separador}callback=${nomeCallback}`;
+  document.head.appendChild(scriptEl);
+}
+
 function enviarParaSync(action, payload) {
   const url = obterUrlSync();
   if (!url) return;
-  fetch(url, { method: "POST", body: JSON.stringify({ action, ...payload }) })
-    .then((r) => r.json())
-    .then((resp) => {
-      if (!resp.ok) {
-        console.error("Erro ao sincronizar:", resp.erro);
-        definirStatusSync("erro", "🔴 Erro ao sincronizar — ver console");
-      }
+  // no-cors: não dá pra ler a resposta de volta (fica opaca), mas o pedido
+  // sai normalmente sem ser bloqueado — é o próprio Chrome que sugere isso
+  // quando a resposta não tem cabeçalho de CORS, que é o caso do Apps Script.
+  fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify({ action, ...payload }) })
+    .then(() => {
+      definirStatusSync("on", "🟢 Sincronizado — " + new Date().toLocaleTimeString("pt-BR"));
     })
     .catch((err) => {
       console.error("Falha de rede ao sincronizar:", err);
@@ -1983,9 +2015,9 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
   const url = obterUrlSync();
   if (!url) return;
   definirStatusSync("off", "🟡 Conectando…");
-  fetch(url)
-    .then((r) => r.json())
-    .then((dados) => {
+  chamarJsonp(
+    url,
+    (dados) => {
       estado.dicionario = (dados.dicionario || []).map((d) => ({ origem: String(d.origem), padronizado: String(d.padronizado) }));
       estado.similares = (dados.similares || []).map((s) => ({ cidade: String(s.cidade), bairro: String(s.bairro), similar_a: String(s.similar_a) }));
       estado.realocacoes = (dados.realocacoes || []).map((r) => ({
@@ -2001,12 +2033,13 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
       renderizarTabelaSimilares();
       renderizarMetricas();
       definirStatusSync("on", "🟢 Sincronizado — " + new Date().toLocaleTimeString("pt-BR"));
-    })
-    .catch((err) => {
+    },
+    (err) => {
       console.error("Falha ao puxar dados da planilha:", err);
       definirStatusSync("erro", "🔴 Não consegui conectar — confira a URL e sua internet");
       if (mostrarAlertaSeErro) alert("Não consegui conectar na planilha. Confira a URL e sua internet.");
-    });
+    }
+  );
 }
 
 document.getElementById("btnConectarSync").addEventListener("click", () => {
