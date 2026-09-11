@@ -133,6 +133,7 @@ body {
   gap: 8px;
 }
 .sidebar-footer .dot-online { color: var(--teal); }
+.sidebar-footer .dot-offline { color: var(--text-muted); }
 
 .brand-hub-label-sidebar {
   font-family: var(--font-mono);
@@ -1429,7 +1430,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-title">Rota Certa <span class="live-dot">LOCAL</span></div>
+      <div class="sidebar-title">PITSTOP <span class="live-dot">LOCAL</span></div>
       <div class="sidebar-subtitle">by: Lara &amp; Lara</div>
     </div>
     <nav class="sidebar-nav" id="tabBar">
@@ -1443,7 +1444,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
     </nav>
     <div class="sidebar-footer">
       <span class="brand-hub-label-sidebar">HUB LCE-04</span>
-      <span class="dot-online">●</span> Modo local — sem servidor
+      <span id="modoConexaoTexto"><span class="dot-online">●</span> Modo local — sem servidor</span>
     </div>
   </aside>
 
@@ -2419,10 +2420,20 @@ document.getElementById("inputDetalheAviso").addEventListener("keydown", (e) => 
 
 function definirStatusSync(situacao, mensagem) {
   const el = document.getElementById("syncStatus");
-  if (!el) return;
-  el.classList.remove("sync-status-on", "sync-status-off", "sync-status-erro");
-  el.classList.add(`sync-status-${situacao}`);
-  el.textContent = mensagem;
+  if (el) {
+    el.classList.remove("sync-status-on", "sync-status-off", "sync-status-erro");
+    el.classList.add(`sync-status-${situacao}`);
+    el.textContent = mensagem;
+  }
+
+  const rodape = document.getElementById("modoConexaoTexto");
+  if (rodape) {
+    if (situacao === "on") {
+      rodape.innerHTML = `<span class="dot-online">●</span> Modo online — com servidor`;
+    } else {
+      rodape.innerHTML = `<span class="dot-offline">●</span> Modo local — sem servidor`;
+    }
+  }
 }
 
 // Truque de JSONP: contorna a falta de cabeçalho CORS nas respostas do
@@ -2492,6 +2503,7 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
       }));
       estado.realocacoes = (dados.realocacoes || []).map((r) => ({
         timestamp: String(r.timestamp),
+        id: String(r.id || `${r.timestamp}_${r.br}`),
         cidade: String(r.cidade),
         bairro: String(r.bairro),
         gaiola_destino: String(r.gaiola_destino),
@@ -3281,7 +3293,7 @@ function renderizarTabelaRealocacoes() {
       estado.realocacoes.splice(indice, 1);
       salvarEstado();
       renderizarMetricas();
-      enviarParaSync("remove_realocacao", { timestamp: removido.timestamp, br: removido.br });
+      enviarParaSync("remove_realocacao", { id: removido.id, timestamp: removido.timestamp, br: removido.br });
     });
   });
 }
@@ -3612,6 +3624,7 @@ els.btnSalvarImprimirRealocacao.addEventListener("click", () => {
   for (const item of itens) {
     const registro = {
       timestamp: agora,
+      id: Date.now() + "_" + Math.random().toString(36).slice(2, 8),
       cidade: contextoBairroAtual.cidade,
       bairro: contextoBairroAtual.bairro,
       gaiola_destino: gaiolaSelecionada,
