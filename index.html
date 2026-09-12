@@ -292,6 +292,39 @@ body {
 }
 .print-avulso button:hover { border-color: var(--amber); background: var(--bg-raised-2); }
 
+.expedicao-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  white-space: nowrap;
+  margin-left: auto;
+}
+.expedicao-badge .expedicao-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.expedicao-badge .expedicao-valor {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--amber);
+  line-height: 1;
+}
+.expedicao-badge .expedicao-unidade {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
 .btn-imprimir-rota {
   background: none;
   border: 1px solid var(--line);
@@ -332,6 +365,8 @@ body {
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px dashed var(--line);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .realocacao-head {
@@ -360,6 +395,58 @@ body {
   text-decoration: underline;
 }
 .link-btn-mini:hover { color: var(--danger); }
+
+.realocacao-colunas {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.realocacao-coluna {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line);
+}
+.realocacao-colunas .realocacao-coluna + .realocacao-coluna {
+  border-left: 1px solid var(--line);
+  padding-left: 24px;
+}
+.realocacao-subtitulo {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px 0;
+}
+.realocacao-coluna-rapida input#inputBrRapido {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--amber-dim);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+}
+.realocacao-coluna-rapida input#inputBrRapido:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+.realocacao-rapida-status {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+  color: var(--teal);
+}
+.realocacao-rapida-status.erro { color: var(--danger); }
+
+@media (max-width: 780px) {
+  .realocacao-colunas { flex-direction: column; }
+  .realocacao-colunas .realocacao-coluna + .realocacao-coluna {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px dashed var(--line);
+  }
+}
 
 .realocacao-linhas {
   display: flex;
@@ -515,8 +602,8 @@ body {
 }
 .etiqueta-motivo {
   position: absolute;
-  top: 0.8mm;
-  right: 1.2mm;
+  top: 0.5mm;
+  right: 0.5mm;
   display: flex;
   align-items: baseline;
   gap: 0.6mm;
@@ -524,6 +611,9 @@ body {
   font-size: 2.2mm;
   font-weight: 700;
   color: #000;
+  background: #fff;
+  padding: 0.3mm 0.5mm;
+  border-radius: 0.6mm;
 }
 .etiqueta-motivo-num {
   font-size: 4.5mm;
@@ -539,7 +629,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1mm;
+  gap: 0.6mm;
 }
 .etiqueta-col + .etiqueta-col {
   border-left: 0.5mm solid #000;
@@ -547,14 +637,15 @@ body {
 .etiqueta-col-rotulo {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 2.8mm;
+  font-size: 2.6mm;
+  line-height: 1.1;
   letter-spacing: 0.06em;
   color: #000;
 }
 .etiqueta-col-valor {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 13mm;
+  font-size: 12mm;
   line-height: 1;
   color: #000;
 }
@@ -563,14 +654,15 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1mm;
-  padding: 1.5mm 0;
+  gap: 0.5mm;
+  padding: 1mm 0;
   border-top: 0.5mm solid #000;
 }
 .etiqueta-data {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 3.2mm;
+  font-size: 3mm;
+  line-height: 1.1;
   color: #000;
 }
 .etiqueta-secundaria {
@@ -586,15 +678,17 @@ body {
 .etiqueta-bairro {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 3.6mm;
+  font-size: 3.1mm;
+  line-height: 1.1;
   color: #000;
   letter-spacing: 0.02em;
 }
 .etiqueta-lembrete {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 3.4mm;
-  letter-spacing: 0.08em;
+  font-size: 2.9mm;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
   color: #000;
 }
 
@@ -905,6 +999,22 @@ body {
   padding: 20px;
 }
 .panel-card.full-width { margin-top: 4px; }
+
+.filter-card {
+  padding: 0;
+  overflow: visible;
+}
+.filter-card-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--bg-raised);
+  padding: 20px 20px 14px 20px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.filter-card > #rotaResultado {
+  padding: 0 20px 20px 20px;
+}
 
 .panel-title {
   font-family: var(--font-display);
@@ -1323,16 +1433,45 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
   font-style: italic;
 }
 
-/* ---------- Consulta expansível: bairros similares aparecem ao lado ---------- */
+/* ---------- Consulta em 3 colunas: campos | rotas possíveis | similares ---------- */
 
-.consulta-expandivel {
+.consulta-e-form-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--bg);
+  padding-top: 4px;
+}
+
+.consulta-3col {
   display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
   gap: 16px;
   align-items: flex-start;
-  justify-content: center;
-  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.consulta-3col > .panel-card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.consulta-3col .filter-card {
+  flex: 1 1 0;
+}
+.coluna-consulta {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.coluna-vazio {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-top: 4px;
+}
+
+@media (max-width: 1100px) {
+  .consulta-3col { flex-direction: column; }
+  .consulta-3col > .panel-card { width: 100%; }
 }
 
 .similares-painel {
@@ -1362,17 +1501,16 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 
 .similares-colunas {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .similar-coluna {
-  flex: 0 0 210px;
-  width: 210px;
-  background: var(--bg-raised);
+  width: 100%;
+  background: var(--bg-raised-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 14px;
   box-sizing: border-box;
 }
 /* dentro da coluna estreita, simplifica a etiqueta de rota (sem barra, mais compacta) */
@@ -1502,6 +1640,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
       <section class="print-avulso">
         <input type="text" id="inputEtiquetaAvulsa" placeholder="Código da gaiola (ex: C-3)" maxlength="12" />
         <button type="button" id="btnImprimirAvulsa">🖨 Imprimir etiqueta</button>
+        <div class="expedicao-badge hidden" id="summaryCards"></div>
       </section>
 
       <div id="tabRomaneio" class="tab-panel">
@@ -1524,6 +1663,20 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
         </section>
 
         <section id="errorSection" class="error-box hidden"></section>
+
+        <div id="romaneioBrutoSection" class="panel-card full-width hidden">
+          <div class="table-head">
+            <h2 class="panel-title">Romaneio bruto (antes do tratamento) — por rota</h2>
+            <input type="text" id="filtroRomaneioBruto" placeholder="Rota ou cidade…" />
+          </div>
+          <p class="panel-hint">Fica aqui, como veio no arquivo original, até você processar outro romaneio.</p>
+          <div class="table-scroll">
+            <table id="tabelaRomaneioBruto">
+              <thead><tr><th>Rota/Gaiola</th><th>Cidade</th><th>Pacotes</th><th>Bairros (como veio no arquivo)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
 
@@ -1551,16 +1704,16 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
             <div id="listaAvisos" class="mural-lista"></div>
           </div>
 
-          <div class="stamp-row hidden" id="summaryCards"></div>
-
           <div id="avisoSemRomaneio" class="panel-card full-width aviso-vazio">
             <p>Nenhum romaneio processado ainda. Vá na aba <strong>📤 Romaneio</strong> pra fazer upload.</p>
           </div>
 
-          <div class="consulta-linha">
-            <div class="consulta-expandivel" id="consultaExpandivel">
+          <div class="consulta-e-form-sticky">
 
-              <div class="panel-card filter-card">
+          <div class="consulta-3col">
+
+            <div class="panel-card filter-card">
+              <div class="filter-card-sticky">
                 <h2 class="panel-title">Consultar rota</h2>
                 <div class="field">
                   <label for="selCidade">Cidade</label>
@@ -1572,40 +1725,68 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
                   <div id="listaBairrosSugestoes" class="bairro-sugestoes hidden" aria-label="Sugestões de bairros"></div>
                   <datalist id="listaBairros"></datalist>
                 </div>
+              </div>
+            </div>
 
-                <div id="rotaResultado" class="rota-resultado hidden">
-                  <div class="rota-resultado-head">
-                    <span class="rota-resultado-nome" id="rotaResultadoNomeBairro"></span>
-                    <span class="rota-resultado-total" id="rotaTotalPacotes"></span>
-                    <span class="rota-resultado-unidade">pcts</span>
-                  </div>
-                  <div id="rotaLista" class="rota-lista"></div>
+            <div class="panel-card coluna-consulta">
+              <h2 class="panel-title">Rotas possíveis</h2>
+              <div id="rotaResultado" class="rota-resultado hidden">
+                <div class="rota-resultado-head">
+                  <span class="rota-resultado-nome" id="rotaResultadoNomeBairro"></span>
+                  <span class="rota-resultado-total" id="rotaTotalPacotes"></span>
+                  <span class="rota-resultado-unidade">pcts</span>
+                </div>
+                <div id="rotaLista" class="rota-lista"></div>
+              </div>
+              <div id="rotaResultadoVazio" class="coluna-vazio">Selecione um bairro pra ver as rotas possíveis.</div>
+            </div>
 
-                  <button type="button" class="link-btn hidden" id="btnVerSimilares">Ver bairros similares</button>
+            <div class="panel-card coluna-consulta">
+              <h2 class="panel-title">Bairros similares</h2>
+              <div id="similaresResultado" class="similares-painel hidden"></div>
+              <div id="similaresVazio" class="coluna-vazio">Selecione um bairro pra ver bairros similares.</div>
+            </div>
 
-                  <div id="realocacaoForm" class="realocacao-form hidden">
-                    <div class="realocacao-head">
-                      <span>Realocando pra gaiola:</span>
-                      <span class="realocacao-gaiola-nome" id="realocacaoGaiolaNome"></span>
-                      <button type="button" class="link-btn-mini" id="btnCancelarRealocacao">cancelar</button>
-                    </div>
-                    <p class="panel-hint">Bipe o BR do pacote — ao apertar Enter (ou o leitor mandar Enter sozinho), o foco já pula pro campo seguinte. Precisa de mais? É só continuar bipando, um novo campo aparece sozinho.</p>
-                    <div class="field-motivo-unico">
-                      <label for="selMotivoUnico">Motivo (vale pra todos os BRs desta leva)</label>
-                      <select id="selMotivoUnico"><option value="">Selecione o motivo…</option></select>
-                    </div>
-                    <div id="realocacaoLinhas" class="realocacao-linhas"></div>
-                    <div class="realocacao-acoes">
-                      <button type="button" class="link-btn" id="btnAdicionarCampoBR">+ adicionar campo</button>
-                      <button type="button" class="btn-principal" id="btnSalvarImprimirRealocacao">Salvar e imprimir etiquetas</button>
-                    </div>
-                  </div>
+          </div>
+
+          <div id="realocacaoForm" class="realocacao-form panel-card full-width hidden">
+            <div class="realocacao-head">
+              <span>Realocando pra gaiola:</span>
+              <span class="realocacao-gaiola-nome" id="realocacaoGaiolaNome"></span>
+              <button type="button" class="link-btn-mini" id="btnCancelarRealocacao">cancelar</button>
+            </div>
+
+            <div class="realocacao-colunas">
+              <div class="realocacao-coluna">
+                <h3 class="realocacao-subtitulo">Vários pacotes, mesmo motivo</h3>
+                <p class="panel-hint">Bipe o BR do pacote — ao apertar Enter (ou o leitor mandar Enter sozinho), o foco já pula pro campo seguinte. Precisa de mais? É só continuar bipando, um novo campo aparece sozinho.</p>
+                <div class="field-motivo-unico">
+                  <label for="selMotivoUnico">Motivo (vale pra todos os BRs desta leva)</label>
+                  <select id="selMotivoUnico"><option value="">Selecione o motivo…</option></select>
+                </div>
+                <div id="realocacaoLinhas" class="realocacao-linhas"></div>
+                <div class="realocacao-acoes">
+                  <button type="button" class="link-btn" id="btnAdicionarCampoBR">+ adicionar campo</button>
+                  <button type="button" class="btn-principal" id="btnSalvarImprimirRealocacao">Salvar e imprimir etiquetas</button>
                 </div>
               </div>
 
-              <div id="similaresResultado" class="similares-painel hidden"></div>
-
+              <div class="realocacao-coluna realocacao-coluna-rapida">
+                <h3 class="realocacao-subtitulo">Um pacote — bipa e já imprime</h3>
+                <p class="panel-hint">Escolhe o motivo uma vez. Depois é só bipar o BR: salva e já imprime a etiqueta na hora, sem precisar clicar em nada — pronto pra bipar o próximo direto em seguida.</p>
+                <div class="field-motivo-unico">
+                  <label for="selMotivoRapido">Motivo</label>
+                  <select id="selMotivoRapido"><option value="">Selecione o motivo…</option></select>
+                </div>
+                <div class="field">
+                  <label for="inputBrRapido">BR</label>
+                  <input type="text" id="inputBrRapido" placeholder="Bipe o BR — imprime na hora" autocomplete="off" />
+                </div>
+                <div id="ultimoBrRapido" class="realocacao-rapida-status hidden"></div>
+              </div>
             </div>
+          </div>
+
           </div>
 
           <div class="panel-card full-width">
@@ -2024,6 +2205,25 @@ function montarPainel(agregado) {
   return painel;
 }
 
+function agregarRomaneioPorRotaBruto(linhasBrutas) {
+  const grupos = new Map();
+  for (const linha of linhasBrutas) {
+    if (!grupos.has(linha.ROTA)) {
+      grupos.set(linha.ROTA, { rota: linha.ROTA, cidade: linha.CIDADE, bairros: [] });
+    }
+    grupos.get(linha.ROTA).bairros.push({ nome: linha.BAIRRO_BRUTO, quantidade: linha.QUANTIDADE });
+  }
+  const lista = [...grupos.values()].map((g) => {
+    const bairrosOrdenados = [...g.bairros]
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .map((b) => ({ nome: b.nome, quantidade: Math.round(b.quantidade) }));
+    const totalPacotes = Math.round(bairrosOrdenados.reduce((s, b) => s + b.quantidade, 0));
+    return { rota: g.rota, cidade: g.cidade, total_pacotes: totalPacotes, bairros: bairrosOrdenados };
+  });
+  lista.sort((a, b) => a.rota.localeCompare(b.rota, undefined, { numeric: true }));
+  return lista;
+}
+
 function processarRomaneio(workbook, dicionarioArray) {
   const mapaDicionario = construirMapaDicionario(dicionarioArray);
   const linhasBrutas = lerRomaneioBruto(workbook);
@@ -2032,6 +2232,7 @@ function processarRomaneio(workbook, dicionarioArray) {
   const novasEntradas = extrairNovasEntradas(linhasTratadas);
   const agregado = agregarPorRota(linhasTratadas);
   const painel = montarPainel(agregado);
+  const romaneioPorRotaBruto = agregarRomaneioPorRotaBruto(linhasBrutas);
 
   const totalPacotes = Math.round(linhasTratadas.reduce((s, l) => s + l.QUANTIDADE, 0));
   const totalNaoCadastrados = Math.round(
@@ -2051,7 +2252,7 @@ function processarRomaneio(workbook, dicionarioArray) {
     bairros_com_multiplas_rotas: painel.filter((p) => p.multiplas_rotas).length,
   };
 
-  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel };
+  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto };
 }
 
 if (typeof module !== "undefined") {
@@ -2064,6 +2265,7 @@ if (typeof module !== "undefined") {
     extrairNovasEntradas,
     agregarPorRota,
     montarPainel,
+    agregarRomaneioPorRotaBruto,
     processarRomaneio,
   };
 }
@@ -2320,6 +2522,25 @@ function montarPainel(agregado) {
   return painel;
 }
 
+function agregarRomaneioPorRotaBruto(linhasBrutas) {
+  const grupos = new Map();
+  for (const linha of linhasBrutas) {
+    if (!grupos.has(linha.ROTA)) {
+      grupos.set(linha.ROTA, { rota: linha.ROTA, cidade: linha.CIDADE, bairros: [] });
+    }
+    grupos.get(linha.ROTA).bairros.push({ nome: linha.BAIRRO_BRUTO, quantidade: linha.QUANTIDADE });
+  }
+  const lista = [...grupos.values()].map((g) => {
+    const bairrosOrdenados = [...g.bairros]
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .map((b) => ({ nome: b.nome, quantidade: Math.round(b.quantidade) }));
+    const totalPacotes = Math.round(bairrosOrdenados.reduce((s, b) => s + b.quantidade, 0));
+    return { rota: g.rota, cidade: g.cidade, total_pacotes: totalPacotes, bairros: bairrosOrdenados };
+  });
+  lista.sort((a, b) => a.rota.localeCompare(b.rota, undefined, { numeric: true }));
+  return lista;
+}
+
 function processarRomaneio(workbook, dicionarioArray) {
   const mapaDicionario = construirMapaDicionario(dicionarioArray);
   const linhasBrutas = lerRomaneioBruto(workbook);
@@ -2328,6 +2549,7 @@ function processarRomaneio(workbook, dicionarioArray) {
   const novasEntradas = extrairNovasEntradas(linhasTratadas);
   const agregado = agregarPorRota(linhasTratadas);
   const painel = montarPainel(agregado);
+  const romaneioPorRotaBruto = agregarRomaneioPorRotaBruto(linhasBrutas);
 
   const totalPacotes = Math.round(linhasTratadas.reduce((s, l) => s + l.QUANTIDADE, 0));
   const totalNaoCadastrados = Math.round(
@@ -2347,7 +2569,7 @@ function processarRomaneio(workbook, dicionarioArray) {
     bairros_com_multiplas_rotas: painel.filter((p) => p.multiplas_rotas).length,
   };
 
-  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel };
+  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto };
 }
 
 if (typeof module !== "undefined") {
@@ -2360,6 +2582,7 @@ if (typeof module !== "undefined") {
     extrairNovasEntradas,
     agregarPorRota,
     montarPainel,
+    agregarRomaneioPorRotaBruto,
     processarRomaneio,
   };
 }
@@ -2768,10 +2991,12 @@ const els = {
   rotaResultado: document.getElementById("rotaResultado"),
   rotaTotalPacotes: document.getElementById("rotaTotalPacotes"),
   rotaLista: document.getElementById("rotaLista"),
-  btnVerSimilares: document.getElementById("btnVerSimilares"),
   similaresResultado: document.getElementById("similaresResultado"),
   tabelaTratamentoBody: document.querySelector("#tabelaTratamento tbody"),
   filtroTabela: document.getElementById("filtroTabela"),
+  tabelaRomaneioBrutoBody: document.querySelector("#tabelaRomaneioBruto tbody"),
+  filtroRomaneioBruto: document.getElementById("filtroRomaneioBruto"),
+  romaneioBrutoSection: document.getElementById("romaneioBrutoSection"),
   btnNovoUpload: document.getElementById("btnNovoUpload"),
   btnBaixarRelatorio: document.getElementById("btnBaixarRelatorio"),
   btnExportarDados: document.getElementById("btnExportarDados"),
@@ -2994,10 +3219,12 @@ function aplicarResultadoRomaneio(resultado) {
     resumo: resultado.resumo,
     tratamento: resultado.tratamento,
     painel: resultado.painel,
+    romaneioBruto: resultado.romaneio_bruto || [],
   };
   salvarEstado();
 
   renderizarResultado(resultado);
+  renderizarRomaneioBruto(resultado.romaneio_bruto);
   els.resultsSection.classList.remove("hidden");
   els.btnNovoUpload.classList.remove("hidden");
   els.btnBaixarRelatorio.classList.remove("hidden");
@@ -3018,10 +3245,11 @@ function renderizarResultado(dados) {
 }
 
 function renderizarResumo(resumo) {
-  const cartoes = [{ label: "Rotas/Gaiolas envolvidas", value: resumo.total_rotas }];
-  els.summaryCards.innerHTML = cartoes
-    .map((c) => `<div class="stamp ${c.alert ? "alert" : ""}"><span class="value">${c.value}</span><span class="label">${c.label}</span></div>`)
-    .join("");
+  els.summaryCards.innerHTML = `
+    <span class="expedicao-label">EXPEDIÇÃO</span>
+    <span class="expedicao-valor">${resumo.total_rotas}</span>
+    <span class="expedicao-unidade">${resumo.total_rotas === 1 ? "ROTA" : "ROTAS"}</span>
+  `;
   els.summaryCards.classList.remove("hidden");
 }
 
@@ -3068,7 +3296,10 @@ function selecionarBairroNoPainel(bairro) {
   els.selBairro.value = bairro;
   contextoBairroAtual = { cidade, bairro };
   mostrarRotasDoBairro(registro);
-  renderizarSugestoesBairros(cidade, bairro);
+
+  const listaSugestoes = document.getElementById("listaBairrosSugestoes");
+  listaSugestoes.innerHTML = "";
+  listaSugestoes.classList.add("hidden");
 }
 
 function renderizarFiltros(painel) {
@@ -3081,6 +3312,10 @@ function renderizarFiltros(painel) {
   els.selBairro.value = "";
   els.selBairro.placeholder = "Selecione a cidade primeiro";
   els.rotaResultado.classList.add("hidden");
+  document.getElementById("rotaResultadoVazio").classList.remove("hidden");
+  els.similaresResultado.classList.add("hidden");
+  els.similaresResultado.innerHTML = "";
+  document.getElementById("similaresVazio").classList.remove("hidden");
   document.getElementById("listaBairrosSugestoes").classList.add("hidden");
 
   els.selCidade.onchange = () => {
@@ -3161,90 +3396,71 @@ function mostrarRotasDoBairro(registro) {
   conectarBotoesRota(els.rotaLista);
 
   fecharFormularioRealocacao();
-  configurarBotaoSimilares(registro);
+  renderizarBairrosSimilares(registro);
   els.rotaResultado.classList.remove("hidden");
+  document.getElementById("rotaResultadoVazio").classList.add("hidden");
 }
 
 // ---------------------------------------------------------------------------
-// Bairros similares — botão "Ver bairros similares" na consulta do Painel
+// Bairros similares — mostrados automaticamente ao lado, sem precisar de botão
 // ---------------------------------------------------------------------------
 
-function configurarBotaoSimilares(registro) {
+function renderizarBairrosSimilares(registro) {
   const pares = estado.similares.filter(
     (s) => normalizarTexto(s.cidade) === normalizarTexto(registro.cidade) && s.bairro === registro.bairro
   );
 
-  els.similaresResultado.classList.add("hidden");
-  els.similaresResultado.innerHTML = "";
+  const vazio = document.getElementById("similaresVazio");
 
   if (!pares.length) {
-    els.btnVerSimilares.classList.add("hidden");
-    els.btnVerSimilares.onclick = null;
+    els.similaresResultado.classList.add("hidden");
+    els.similaresResultado.innerHTML = "";
+    vazio.textContent = "Nenhum bairro similar cadastrado pra este bairro.";
+    vazio.classList.remove("hidden");
     return;
   }
 
-  els.btnVerSimilares.classList.remove("hidden");
-  els.btnVerSimilares.textContent = `Ver bairros similares (${pares.length})`;
-  els.btnVerSimilares.dataset.aberto = "false";
+  vazio.classList.add("hidden");
 
-  els.btnVerSimilares.onclick = () => {
-    const aberto = els.btnVerSimilares.dataset.aberto === "true";
-    if (aberto) {
-      els.similaresResultado.classList.add("hidden");
-      els.btnVerSimilares.dataset.aberto = "false";
-      els.btnVerSimilares.textContent = `Ver bairros similares (${pares.length})`;
-      return;
-    }
-
-    const colunasHtml = pares
-      .map((par) => {
-        const registroSimilar = painelAtual.find(
-          (p) => normalizarTexto(p.cidade) === normalizarTexto(par.cidade) && p.bairro === par.similar_a
-        );
-        if (!registroSimilar) {
-          return `
-            <div class="similar-coluna">
-              <div class="rota-resultado-head">
-                <span class="rota-resultado-nome">${tituloCase(par.similar_a)}</span>
-              </div>
-              <div class="similar-grupo-vazio">Sem pacotes desse bairro neste romaneio.</div>
-            </div>`;
-        }
+  const colunasHtml = pares
+    .map((par) => {
+      const registroSimilar = painelAtual.find(
+        (p) => normalizarTexto(p.cidade) === normalizarTexto(par.cidade) && p.bairro === par.similar_a
+      );
+      if (!registroSimilar) {
         return `
           <div class="similar-coluna">
             <div class="rota-resultado-head">
               <span class="rota-resultado-nome">${tituloCase(par.similar_a)}</span>
-              <span class="rota-resultado-total">${registroSimilar.total_pacotes}</span>
-              <span class="rota-resultado-unidade">pcts</span>
             </div>
-            <div class="rota-lista" data-similar="${par.similar_a}"></div>
+            <div class="similar-grupo-vazio">Sem pacotes desse bairro neste romaneio.</div>
           </div>`;
-      })
-      .join("");
+      }
+      return `
+        <div class="similar-coluna">
+          <div class="rota-resultado-head">
+            <span class="rota-resultado-nome">${tituloCase(par.similar_a)}</span>
+            <span class="rota-resultado-total">${registroSimilar.total_pacotes}</span>
+            <span class="rota-resultado-unidade">pcts</span>
+          </div>
+          <div class="rota-lista" data-similar="${par.similar_a}"></div>
+        </div>`;
+    })
+    .join("");
 
-    els.similaresResultado.innerHTML = `
-      <div class="similares-cabecalho">
-        <div class="similares-titulo">Bairros similares</div>
-        <p class="similares-descricao">Bairros próximos cadastrados como alternativa pra este — use as gaiolas abaixo quando a rota principal já não tiver mais vaga ou já tiver saído.</p>
-      </div>
-      <div class="similares-colunas">${colunasHtml}</div>
-    `;
+  els.similaresResultado.innerHTML = `<div class="similares-colunas">${colunasHtml}</div>`;
 
-    // preenche cada mini-lista e conecta os botões (feito depois do innerHTML pra achar os containers)
-    pares.forEach((par) => {
-      const registroSimilar = painelAtual.find(
-        (p) => normalizarTexto(p.cidade) === normalizarTexto(par.cidade) && p.bairro === par.similar_a
-      );
-      if (!registroSimilar) return;
-      const container = els.similaresResultado.querySelector(`[data-similar="${CSS.escape(par.similar_a)}"]`);
-      container.innerHTML = construirListaRotasHtml(registroSimilar.rotas_possiveis);
-      conectarBotoesRota(container);
-    });
+  pares.forEach((par) => {
+    const registroSimilar = painelAtual.find(
+      (p) => normalizarTexto(p.cidade) === normalizarTexto(par.cidade) && p.bairro === par.similar_a
+    );
+    if (!registroSimilar) return;
+    const container = els.similaresResultado.querySelector(`[data-similar="${CSS.escape(par.similar_a)}"]`);
+    container.innerHTML = construirListaRotasHtml(registroSimilar.rotas_possiveis);
+    conectarBotoesRota(container);
+  });
 
-    els.similaresResultado.classList.remove("hidden");
-    els.btnVerSimilares.dataset.aberto = "true";
-    els.btnVerSimilares.textContent = "Esconder bairros similares";
-  };
+  els.similaresResultado.classList.remove("hidden");
 }
 
 function renderizarTabela(linhas) {
@@ -3278,6 +3494,45 @@ function renderizarTabela(linhas) {
       })
     );
   };
+}
+
+function renderizarRomaneioBruto(linhasPorRota) {
+  if (!linhasPorRota || !linhasPorRota.length) {
+    els.romaneioBrutoSection.classList.add("hidden");
+    return;
+  }
+
+  const formatarBairros = (bairros) => bairros.map((b) => `${b.nome}: ${b.quantidade}`).join("; ");
+
+  const desenhar = (dados) => {
+    els.tabelaRomaneioBrutoBody.innerHTML = dados
+      .map(
+        (r) =>
+          `<tr><td>${r.rota}</td><td>${r.cidade}</td><td class="num">${r.total_pacotes}</td><td>${formatarBairros(r.bairros)}</td></tr>`
+      )
+      .join("");
+  };
+
+  const normalizarBuscaRota = (valor) => normalizarTexto(valor).replace(/\s+/g, "");
+
+  desenhar(linhasPorRota);
+  els.filtroRomaneioBruto.oninput = () => {
+    const termo = els.filtroRomaneioBruto.value.trim();
+    if (!termo) return desenhar(linhasPorRota);
+
+    const termoNormalizado = normalizarTexto(termo);
+    const termoRotaBusca = normalizarBuscaRota(termo);
+
+    desenhar(
+      linhasPorRota.filter((r) => {
+        const rotaNormalizada = normalizarBuscaRota(r.rota);
+        const cidadeNormalizada = normalizarTexto(r.cidade);
+        return rotaNormalizada === termoRotaBusca || cidadeNormalizada.includes(termoNormalizado);
+      })
+    );
+  };
+
+  els.romaneioBrutoSection.classList.remove("hidden");
 }
 
 // ---------------------------------------------------------------------------
@@ -3716,10 +3971,10 @@ function criarLinhaBR() {
 }
 
 function popularSelectMotivoUnico() {
-  const sel = document.getElementById("selMotivoUnico");
-  sel.innerHTML =
-    `<option value="">Selecione o motivo…</option>` +
+  const opcoesHtml = `<option value="">Selecione o motivo…</option>` +
     MOTIVOS_REALOCACAO.map((m) => `<option value="${m.valor}">${m.rotulo}</option>`).join("");
+  document.getElementById("selMotivoUnico").innerHTML = opcoesHtml;
+  document.getElementById("selMotivoRapido").innerHTML = opcoesHtml;
 }
 popularSelectMotivoUnico();
 
@@ -3731,6 +3986,11 @@ function selecionarGaiolaParaRealocacao(codigoGaiola, botaoClicado) {
   document.getElementById("selMotivoUnico").value = "";
   els.realocacaoLinhas.innerHTML = "";
   for (let i = 0; i < 3; i++) els.realocacaoLinhas.appendChild(criarLinhaBR());
+  document.getElementById("selMotivoRapido").value = "";
+  document.getElementById("inputBrRapido").value = "";
+  const statusRapido = document.getElementById("ultimoBrRapido");
+  statusRapido.classList.add("hidden");
+  statusRapido.textContent = "";
   els.realocacaoForm.classList.remove("hidden");
   const primeiroInput = els.realocacaoLinhas.querySelector(".input-br");
   if (primeiroInput) primeiroInput.focus();
@@ -3741,7 +4001,31 @@ function fecharFormularioRealocacao() {
   els.realocacaoForm.classList.add("hidden");
   els.realocacaoLinhas.innerHTML = "";
   document.getElementById("selMotivoUnico").value = "";
+  document.getElementById("selMotivoRapido").value = "";
+  document.getElementById("inputBrRapido").value = "";
+  const statusRapido = document.getElementById("ultimoBrRapido");
+  statusRapido.classList.add("hidden");
+  statusRapido.textContent = "";
   els.rotaLista.querySelectorAll(".btn-selecionar-rota").forEach((b) => b.classList.remove("ativo"));
+}
+
+function limparConsultaRota() {
+  contextoBairroAtual = null;
+  els.selCidade.value = "";
+  els.selBairro.value = "";
+  els.selBairro.disabled = true;
+  els.selBairro.placeholder = "Selecione a cidade primeiro";
+  els.rotaResultado.classList.add("hidden");
+  document.getElementById("rotaResultadoVazio").classList.remove("hidden");
+  els.similaresResultado.classList.add("hidden");
+  els.similaresResultado.innerHTML = "";
+  const similaresVazio = document.getElementById("similaresVazio");
+  similaresVazio.textContent = "Selecione um bairro pra ver bairros similares.";
+  similaresVazio.classList.remove("hidden");
+  const listaSugestoes = document.getElementById("listaBairrosSugestoes");
+  listaSugestoes.innerHTML = "";
+  listaSugestoes.classList.add("hidden");
+  document.getElementById("listaBairros").innerHTML = "";
 }
 
 els.btnAdicionarCampoBR.addEventListener("click", () => {
@@ -3796,7 +4080,60 @@ els.btnSalvarImprimirRealocacao.addEventListener("click", () => {
 
   imprimirEtiquetasDeRealocacao(gaiolaSelecionada, itens);
   fecharFormularioRealocacao();
+  limparConsultaRota();
   renderizarMetricas();
+});
+
+// ---------------------------------------------------------------------------
+// Fluxo rápido — um pacote por vez: bipa e já salva + imprime na hora,
+// sem fechar o formulário nem limpar a busca (fica pronto pro próximo BR).
+// ---------------------------------------------------------------------------
+
+document.getElementById("inputBrRapido").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+
+  const inputBr = document.getElementById("inputBrRapido");
+  const statusEl = document.getElementById("ultimoBrRapido");
+  const br = inputBr.value.trim();
+  if (!br) return;
+
+  const motivo = document.getElementById("selMotivoRapido").value;
+  if (!motivo) {
+    statusEl.textContent = "⚠ Selecione o motivo antes de bipar.";
+    statusEl.classList.remove("hidden");
+    statusEl.classList.add("erro");
+    document.getElementById("selMotivoRapido").focus();
+    return;
+  }
+
+  if (!contextoBairroAtual || !gaiolaSelecionada) {
+    statusEl.textContent = "⚠ Selecione a cidade, o bairro e a gaiola antes de bipar.";
+    statusEl.classList.remove("hidden");
+    statusEl.classList.add("erro");
+    return;
+  }
+
+  const registro = {
+    timestamp: agoraDataHoraLocal(),
+    id: Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+    cidade: contextoBairroAtual.cidade,
+    bairro: contextoBairroAtual.bairro,
+    gaiola_destino: gaiolaSelecionada,
+    br,
+    motivo,
+  };
+  estado.realocacoes.push(registro);
+  enviarParaSync("add_realocacao", registro);
+  salvarEstado();
+
+  imprimirEtiquetasDeRealocacao(gaiolaSelecionada, [{ br, motivo, bairro: contextoBairroAtual.bairro }]);
+  renderizarMetricas();
+
+  statusEl.textContent = `✓ ${br} salvo e impresso — ${new Date().toLocaleTimeString("pt-BR")}`;
+  statusEl.classList.remove("hidden", "erro");
+  inputBr.value = "";
+  inputBr.focus();
 });
 
 // ---------------------------------------------------------------------------
@@ -3971,6 +4308,7 @@ els.inputImportarDados.addEventListener("change", () => {
       novas_entradas: estado.pendentes,
       painel: estado.ultimoProcessamento.painel,
     });
+    renderizarRomaneioBruto(estado.ultimoProcessamento.romaneioBruto);
     els.resultsSection.classList.remove("hidden");
     els.btnNovoUpload.classList.remove("hidden");
     els.btnBaixarRelatorio.classList.remove("hidden");
