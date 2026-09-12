@@ -2438,9 +2438,11 @@ function decodificarJwt(token) {
   return JSON.parse(json);
 }
 
+const MENSAGEM_LOGIN_PADRAO = "Entra com sua conta @shopee.com pra usar o site.";
+
 function mostrarTelaLogin(mensagem) {
   const overlay = document.getElementById("loginOverlay");
-  if (mensagem) document.getElementById("loginMensagem").textContent = mensagem;
+  document.getElementById("loginMensagem").textContent = mensagem || MENSAGEM_LOGIN_PADRAO;
   overlay.classList.remove("hidden");
 }
 
@@ -2472,8 +2474,18 @@ function aoReceberLoginGoogle(response) {
   enviarParaSync("log_acesso", { timestamp: agoraDataHoraLocal(), email, nome });
 }
 
-function configurarBotaoGoogle() {
+function configurarBotaoGoogle(tentativa) {
+  tentativa = tentativa || 0;
+
   if (typeof google === "undefined" || !google.accounts) {
+    // o script do Google carrega em segundo plano (async) e às vezes ainda
+    // não terminou quando chegamos aqui — em vez de desistir na hora,
+    // espera um pouco e tenta de novo (até ~6s no total).
+    if (tentativa < 20) {
+      if (tentativa === 0) mostrarTelaLogin("Carregando login do Google…");
+      setTimeout(() => configurarBotaoGoogle(tentativa + 1), 300);
+      return;
+    }
     mostrarTelaLogin("Não consegui carregar o login do Google. Confira sua internet e recarregue a página.");
     return;
   }
@@ -2486,6 +2498,7 @@ function configurarBotaoGoogle() {
     size: "large",
     text: "signin_with",
   });
+  mostrarTelaLogin(); // restaura a mensagem padrão, caso tenha ficado "Carregando…"
 }
 
 function iniciarLoginSeNecessario() {
