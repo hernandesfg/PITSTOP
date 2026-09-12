@@ -837,6 +837,44 @@ body {
 .mural-item-remover:hover { color: var(--danger); }
 .mural-vazio { font-size: 13px; color: var(--text-muted); font-style: italic; padding: 4px 0; }
 
+/* ---------- Tela de login (Google) ---------- */
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.login-caixa {
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 40px 44px;
+  text-align: center;
+  max-width: 360px;
+}
+.login-logo {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+.login-caixa p {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+#googleSignInButton {
+  display: flex;
+  justify-content: center;
+}
+
+
 .aviso-fixo {
   background: var(--danger-dim);
   border: 1px solid var(--danger);
@@ -1423,8 +1461,17 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 }
 
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+<div id="loginOverlay" class="login-overlay hidden">
+  <div class="login-caixa">
+    <div class="login-logo">PITSTOP</div>
+    <p id="loginMensagem">Entra com sua conta @shopee.com pra usar o site.</p>
+    <div id="googleSignInButton"></div>
+  </div>
+</div>
+
 
 <div class="app-shell">
 
@@ -2355,6 +2402,104 @@ const CHAVE_SYNC_URL = "rotaCerta_sheetsUrl";
 
 function obterUrlSync() {
   return localStorage.getItem(CHAVE_SYNC_URL) || "";
+}
+
+// ---------------------------------------------------------------------------
+// Login com Google (opcional) — só ativa se GOOGLE_CLIENT_ID estiver
+// preenchido E o site estiver rodando via http(s) (não funciona em file://,
+// que é uma limitação do próprio Google Sign-In, não nossa).
+// ---------------------------------------------------------------------------
+
+const GOOGLE_CLIENT_ID = "918378809715-vf4rtbrqk6cjlfogesdahi1c6aqtdfas.apps.googleusercontent.com";
+const URL_SYNC_PADRAO = ""; // opcional: preencher pra todo mundo já conectar sozinho
+
+const CHAVE_USUARIO_ATUAL = "pitstop_usuario_atual";
+
+function estaRodandoOnline() {
+  return window.location.protocol === "https:" || window.location.protocol === "http:";
+}
+
+function obterUsuarioAtual() {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_USUARIO_ATUAL) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function decodificarJwt(token) {
+  const payload = token.split(".")[1];
+  const json = decodeURIComponent(
+    atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+      .split("")
+      .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+      .join("")
+  );
+  return JSON.parse(json);
+}
+
+function mostrarTelaLogin(mensagem) {
+  const overlay = document.getElementById("loginOverlay");
+  if (mensagem) document.getElementById("loginMensagem").textContent = mensagem;
+  overlay.classList.remove("hidden");
+}
+
+function esconderTelaLogin() {
+  document.getElementById("loginOverlay").classList.add("hidden");
+}
+
+const DOMINIO_AUTORIZADO = "@shopee.com";
+
+function aoReceberLoginGoogle(response) {
+  let dados;
+  try {
+    dados = decodificarJwt(response.credential);
+  } catch (erro) {
+    mostrarTelaLogin("Não consegui ler os dados do login. Tenta de novo.");
+    return;
+  }
+  const email = String(dados.email || "").toLowerCase().trim();
+  const nome = dados.name || email;
+
+  if (!email.endsWith(DOMINIO_AUTORIZADO)) {
+    mostrarTelaLogin(`❌ ${email} não é uma conta ${DOMINIO_AUTORIZADO}. Entra com sua conta da empresa.`);
+    return;
+  }
+
+  const usuario = { email, nome };
+  localStorage.setItem(CHAVE_USUARIO_ATUAL, JSON.stringify(usuario));
+  esconderTelaLogin();
+  enviarParaSync("log_acesso", { timestamp: agoraDataHoraLocal(), email, nome });
+}
+
+function configurarBotaoGoogle() {
+  if (typeof google === "undefined" || !google.accounts) {
+    mostrarTelaLogin("Não consegui carregar o login do Google. Confira sua internet e recarregue a página.");
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: aoReceberLoginGoogle,
+  });
+  google.accounts.id.renderButton(document.getElementById("googleSignInButton"), {
+    theme: "outline",
+    size: "large",
+    text: "signin_with",
+  });
+}
+
+function iniciarLoginSeNecessario() {
+  if (!GOOGLE_CLIENT_ID || !estaRodandoOnline()) {
+    return; // modo local, ou login não configurado: não exige nada
+  }
+
+  const jaLogado = obterUsuarioAtual();
+  if (jaLogado && jaLogado.email && jaLogado.email.endsWith(DOMINIO_AUTORIZADO)) {
+    return; // já logado com conta válida neste navegador, não precisa repetir
+  }
+
+  mostrarTelaLogin();
+  configurarBotaoGoogle();
 }
 
 // ---------------------------------------------------------------------------
@@ -3791,6 +3936,8 @@ els.inputImportarDados.addEventListener("change", () => {
 // ---------------------------------------------------------------------------
 
 (function inicializar() {
+  iniciarLoginSeNecessario();
+
   const urlSalva = obterUrlSync();
   if (urlSalva) {
     document.getElementById("inputSyncUrl").value = urlSalva;
