@@ -2252,7 +2252,7 @@ function processarRomaneio(workbook, dicionarioArray) {
     bairros_com_multiplas_rotas: painel.filter((p) => p.multiplas_rotas).length,
   };
 
-  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto };
+  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto, linhas_brutas: linhasBrutas };
 }
 
 if (typeof module !== "undefined") {
@@ -2569,7 +2569,7 @@ function processarRomaneio(workbook, dicionarioArray) {
     bairros_com_multiplas_rotas: painel.filter((p) => p.multiplas_rotas).length,
   };
 
-  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto };
+  return { resumo, tratamento: agregado, novas_entradas: novasEntradas, painel, romaneio_bruto: romaneioPorRotaBruto, linhas_brutas: linhasBrutas };
 }
 
 if (typeof module !== "undefined") {
@@ -2694,7 +2694,31 @@ function aoReceberLoginGoogle(response) {
   const usuario = { email, nome };
   localStorage.setItem(CHAVE_USUARIO_ATUAL, JSON.stringify(usuario));
   esconderTelaLogin();
-  enviarParaSync("log_acesso", { timestamp: agoraDataHoraLocal(), email, nome });
+  registrarAcesso(email, nome);
+  atualizarPapelUsuarioAtual();
+}
+
+const CHAVE_ACESSO_PENDENTE = "pitstop_acesso_pendente";
+
+function registrarAcesso(email, nome) {
+  const registro = { timestamp: agoraDataHoraLocal(), email, nome };
+  if (obterUrlSync()) {
+    enviarParaSync("log_acesso", registro);
+  } else {
+    // planilha ainda não conectada nesse momento — guarda pra mandar assim que conectar
+    localStorage.setItem(CHAVE_ACESSO_PENDENTE, JSON.stringify(registro));
+  }
+}
+
+function enviarAcessoPendenteSeExistir() {
+  const pendente = localStorage.getItem(CHAVE_ACESSO_PENDENTE);
+  if (!pendente) return;
+  localStorage.removeItem(CHAVE_ACESSO_PENDENTE);
+  try {
+    enviarParaSync("log_acesso", JSON.parse(pendente));
+  } catch {
+    /* registro pendente corrompido — descarta */
+  }
 }
 
 function configurarBotaoGoogle(tentativa) {
@@ -2724,6 +2748,46 @@ function configurarBotaoGoogle(tentativa) {
   mostrarTelaLogin(); // restaura a mensagem padrão, caso tenha ficado "Carregando…"
 }
 
+let papelUsuarioAtual = "admin"; // padrão liberado; só restringe depois de confirmar o papel pela planilha
+
+function determinarPapel(email, listaUsuarios) {
+  const lista = listaUsuarios || [];
+  const encontrado = lista.find(
+    (u) => String(u.email || "").toLowerCase().trim() === String(email || "").toLowerCase().trim()
+  );
+  if (!encontrado) return "normal";
+  return String(encontrado.papel || "").toLowerCase().trim() === "admin" ? "admin" : "normal";
+}
+
+function aplicarRestricaoDePapel(papel) {
+  papelUsuarioAtual = papel;
+  const restrito = papel !== "admin";
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    if (btn.dataset.tab === "painel") return;
+    btn.classList.toggle("hidden", restrito);
+  });
+  if (restrito) ativarAba("painel");
+}
+
+function atualizarPapelUsuarioAtual() {
+  const url = obterUrlSync();
+  const usuarioAtual = obterUsuarioAtual();
+  if (!url || !usuarioAtual) return; // sem planilha configurada ainda, não dá pra saber o papel — não restringe
+  chamarJsonp(
+    url,
+    (dados) => {
+      window.__usuariosLista = dados.usuarios || [];
+      const papel = determinarPapel(usuarioAtual.email, window.__usuariosLista);
+      if (papel !== usuarioAtual.papel) {
+        usuarioAtual.papel = papel;
+        localStorage.setItem(CHAVE_USUARIO_ATUAL, JSON.stringify(usuarioAtual));
+      }
+      aplicarRestricaoDePapel(papel);
+    },
+    () => {} // silencioso — mantém o papel atual se não conseguir consultar agora
+  );
+}
+
 function iniciarLoginSeNecessario() {
   if (!GOOGLE_CLIENT_ID || !estaRodandoOnline()) {
     return; // modo local, ou login não configurado: não exige nada
@@ -2731,6 +2795,8 @@ function iniciarLoginSeNecessario() {
 
   const jaLogado = obterUsuarioAtual();
   if (jaLogado && jaLogado.email && jaLogado.email.endsWith(DOMINIO_AUTORIZADO)) {
+    aplicarRestricaoDePapel(jaLogado.papel || "admin");
+    atualizarPapelUsuarioAtual();
     return; // já logado com conta válida neste navegador, não precisa repetir
   }
 
@@ -2902,6 +2968,18 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
       renderizarTabelaSimilares();
       renderizarMetricas();
       renderizarAvisos();
+      reprocessarComDicionarioAtual();
+      window.__usuariosLista = dados.usuarios || [];
+      const usuarioAtualSync = obterUsuarioAtual();
+      if (usuarioAtualSync) {
+        const papelAtualizado = determinarPapel(usuarioAtualSync.email, window.__usuariosLista);
+        if (papelAtualizado !== usuarioAtualSync.papel) {
+          usuarioAtualSync.papel = papelAtualizado;
+          localStorage.setItem(CHAVE_USUARIO_ATUAL, JSON.stringify(usuarioAtualSync));
+        }
+        aplicarRestricaoDePapel(papelAtualizado);
+      }
+      enviarAcessoPendenteSeExistir();
       definirStatusSync("on", "🟢 Sincronizado — " + new Date().toLocaleTimeString("pt-BR"));
     },
     (err) => {
@@ -3220,6 +3298,7 @@ function aplicarResultadoRomaneio(resultado) {
     tratamento: resultado.tratamento,
     painel: resultado.painel,
     romaneioBruto: resultado.romaneio_bruto || [],
+    linhasBrutas: resultado.linhas_brutas || [],
   };
   salvarEstado();
 
@@ -3229,6 +3308,68 @@ function aplicarResultadoRomaneio(resultado) {
   els.btnNovoUpload.classList.remove("hidden");
   els.btnBaixarRelatorio.classList.remove("hidden");
   ativarAba("painel");
+}
+
+// ---------------------------------------------------------------------------
+// Reprocessa o romaneio já carregado com o dicionário ATUAL, sem precisar
+// subir o arquivo de novo — chamado sempre que o dicionário muda (padronizar,
+// remover, ou sincronizar com a planilha), pra bairro já padronizado parar
+// de aparecer "duplicado" com o nome de origem na busca.
+// ---------------------------------------------------------------------------
+
+function reprocessarComDicionarioAtual() {
+  const brutas = estado.ultimoProcessamento && estado.ultimoProcessamento.linhasBrutas;
+  if (!brutas || !brutas.length) return;
+
+  const mapaDicionario = construirMapaDicionario(estado.dicionario);
+  const linhasTratadas = tratarRomaneio(brutas, mapaDicionario);
+  const novasEntradas = extrairNovasEntradas(linhasTratadas);
+  const agregado = agregarPorRota(linhasTratadas);
+  const painel = montarPainel(agregado);
+
+  const totalPacotes = Math.round(linhasTratadas.reduce((s, l) => s + l.QUANTIDADE, 0));
+  const totalNaoCadastrados = Math.round(
+    linhasTratadas.filter((l) => l.STATUS === "NAO_CADASTRADO").reduce((s, l) => s + l.QUANTIDADE, 0)
+  );
+  const resumo = {
+    total_pacotes: totalPacotes,
+    total_linhas: linhasTratadas.length,
+    total_rotas: new Set(linhasTratadas.map((l) => l.ROTA)).size,
+    total_cidades: new Set(linhasTratadas.map((l) => l.CIDADE)).size,
+    total_bairros_padronizados: new Set(
+      linhasTratadas.filter((l) => l.STATUS === "CADASTRADO").map((l) => l.BAIRRO_PADRONIZADO)
+    ).size,
+    total_pacotes_nao_cadastrados: totalNaoCadastrados,
+    percentual_nao_cadastrado: totalPacotes ? Math.round((totalNaoCadastrados / totalPacotes) * 10000) / 100 : 0,
+    bairros_com_multiplas_rotas: painel.filter((p) => p.multiplas_rotas).length,
+  };
+
+  estado.pendentes = novasEntradas;
+  estado.ultimoProcessamento.resumo = resumo;
+  estado.ultimoProcessamento.tratamento = agregado;
+  estado.ultimoProcessamento.painel = painel;
+  salvarEstado();
+
+  painelAtual = painel;
+  renderizarResumo(resumo);
+  renderizarTabela(agregado);
+  renderizarPendentes(estado.pendentes);
+
+  const cidadeAtual = els.selCidade.value;
+  const cidades = [...new Set(painel.map((p) => p.cidade))].sort();
+  els.selCidade.innerHTML = `<option value="">Selecione…</option>` + cidades.map((c) => `<option value="${c}">${c}</option>`).join("");
+  if (cidades.includes(cidadeAtual)) els.selCidade.value = cidadeAtual;
+
+  if (contextoBairroAtual) {
+    const registroAtualizado = painel.find(
+      (p) => p.cidade === contextoBairroAtual.cidade && p.bairro === contextoBairroAtual.bairro
+    );
+    if (registroAtualizado) {
+      mostrarRotasDoBairro(registroAtualizado);
+    } else {
+      limparConsultaRota();
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -3540,6 +3681,7 @@ function renderizarRomaneioBruto(linhasPorRota) {
 // ---------------------------------------------------------------------------
 
 function ativarAba(aba) {
+  if (papelUsuarioAtual !== "admin" && aba !== "painel") aba = "painel";
   els.tabBar.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === aba));
   els.tabRomaneio.classList.toggle("hidden", aba !== "romaneio");
   els.tabPainel.classList.toggle("hidden", aba !== "painel");
@@ -3791,12 +3933,7 @@ function resolverPendente(btn) {
   item.classList.add("resolvido");
   btn.textContent = "Salvo ✓";
   setTimeout(() => {
-    item.remove();
-    const restantes = els.pendentesLista.querySelectorAll(".pendente-item").length;
-    atualizarBadgePendentes(restantes);
-    if (restantes === 0) {
-      els.pendentesLista.innerHTML = `<div class="vazio">Nenhuma pendência — todos os bairros deste romaneio já estão padronizados.</div>`;
-    }
+    reprocessarComDicionarioAtual();
   }, 500);
 
   renderizarTabelaDicionario();
@@ -3823,6 +3960,7 @@ function desenharTabelaDicionario(linhas) {
       salvarEstado();
       tr.remove();
       enviarParaSync("remove_dicionario", { origem });
+      reprocessarComDicionarioAtual();
     });
   });
 }
