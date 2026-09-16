@@ -2972,7 +2972,11 @@ function puxarDadosDaSync(mostrarAlertaSeErro) {
       renderizarTabelaSimilares();
       renderizarMetricas();
       renderizarAvisos();
-      reprocessarComDicionarioAtual();
+      if (dados.romaneio && dados.romaneio.length) {
+        aplicarRomaneioDaSync(dados.romaneio);
+      } else {
+        reprocessarComDicionarioAtual();
+      }
       window.__usuariosLista = dados.usuarios || [];
       const usuarioAtualSync = obterUsuarioAtual();
       if (usuarioAtualSync) {
@@ -3105,6 +3109,52 @@ const els = {
 
 let contextoBairroAtual = null;
 let gaiolaSelecionada = null;
+
+const CHAVE_SESSAO_ATIVA = "pitstop_sessao_ativa";
+
+function salvarSessaoAtiva() {
+  if (!contextoBairroAtual) {
+    localStorage.removeItem(CHAVE_SESSAO_ATIVA);
+    return;
+  }
+  localStorage.setItem(
+    CHAVE_SESSAO_ATIVA,
+    JSON.stringify({ cidade: contextoBairroAtual.cidade, bairro: contextoBairroAtual.bairro, gaiolaSelecionada })
+  );
+}
+
+function restaurarSessaoAtiva() {
+  const salvo = localStorage.getItem(CHAVE_SESSAO_ATIVA);
+  if (!salvo) return;
+  let sessao;
+  try {
+    sessao = JSON.parse(salvo);
+  } catch {
+    localStorage.removeItem(CHAVE_SESSAO_ATIVA);
+    return;
+  }
+  if (!sessao || !sessao.cidade || !sessao.bairro || !painelAtual.length) return;
+
+  const registro = painelAtual.find((p) => p.cidade === sessao.cidade && p.bairro === sessao.bairro);
+  if (!registro) {
+    localStorage.removeItem(CHAVE_SESSAO_ATIVA);
+    return;
+  }
+
+  els.selCidade.value = sessao.cidade;
+  els.selCidade.dispatchEvent(new Event("change"));
+  els.selBairro.value = sessao.bairro;
+  els.selBairro.disabled = false;
+  contextoBairroAtual = { cidade: sessao.cidade, bairro: sessao.bairro };
+  mostrarRotasDoBairro(registro);
+
+  if (sessao.gaiolaSelecionada) {
+    const botao = els.rotaLista.querySelector(`.btn-selecionar-rota[data-rota="${CSS.escape(sessao.gaiolaSelecionada)}"]`);
+    if (botao) {
+      selecionarGaiolaParaRealocacao(sessao.gaiolaSelecionada, botao);
+    }
+  }
+}
 let contadorLinhaBR = 0;
 
 const MOTIVOS_REALOCACAO = [
@@ -3312,6 +3362,70 @@ function aplicarResultadoRomaneio(resultado) {
   els.btnNovoUpload.classList.remove("hidden");
   els.btnBaixarRelatorio.classList.remove("hidden");
   ativarAba("painel");
+
+  if (papelUsuarioAtual === "admin") {
+    publicarRomaneioNaPlanilha(resultado.romaneio_bruto);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Romaneio compartilhado — admin publica o romaneio do dia na planilha,
+// todo mundo puxa sozinho sem precisar subir o arquivo no computador deles.
+// ---------------------------------------------------------------------------
+
+function publicarRomaneioNaPlanilha(romaneioBruto) {
+  if (!obterUrlSync()) return; // sem planilha conectada, não tem como publicar
+  const linhas = (romaneioBruto || []).map((r) => ({
+    rota: r.rota,
+    cidade: r.cidade,
+    bairros: r.bairros.map((b) => `${b.nome}: ${b.quantidade}`).join("; "),
+  }));
+  enviarParaSync("publicar_romaneio", { linhas });
+}
+
+function aplicarRomaneioDaSync(linhasRomaneio) {
+  if (!linhasRomaneio || !linhasRomaneio.length) return;
+
+  const linhasBrutas = [];
+  const romaneioBrutoParaTabela = [];
+  linhasRomaneio.forEach((linha) => {
+    const pares = tentarExplodirAgregado(String(linha.bairros || ""));
+    if (!pares) return;
+    const bairrosOrdenados = pares
+      .map(([nome, quantidade]) => ({ nome, quantidade: Math.round(quantidade) }))
+      .sort((a, b) => b.quantidade - a.quantidade);
+    bairrosOrdenados.forEach((b) => {
+      linhasBrutas.push({
+        ROTA: String(linha.rota),
+        CIDADE: String(linha.cidade),
+        BAIRRO_BRUTO: b.nome,
+        QUANTIDADE: b.quantidade,
+      });
+    });
+    romaneioBrutoParaTabela.push({
+      rota: String(linha.rota),
+      cidade: String(linha.cidade),
+      total_pacotes: bairrosOrdenados.reduce((s, b) => s + b.quantidade, 0),
+      bairros: bairrosOrdenados,
+    });
+  });
+  if (!linhasBrutas.length) return;
+
+  const primeiraVez = !estado.ultimoProcessamento;
+  estado.ultimoProcessamento = estado.ultimoProcessamento || {};
+  estado.ultimoProcessamento.linhasBrutas = linhasBrutas;
+  estado.ultimoProcessamento.romaneioBruto = romaneioBrutoParaTabela;
+  salvarEstado();
+
+  reprocessarComDicionarioAtual();
+  renderizarRomaneioBruto(romaneioBrutoParaTabela);
+
+  if (primeiraVez) {
+    els.resultsSection.classList.remove("hidden");
+    els.btnNovoUpload.classList.remove("hidden");
+    els.btnBaixarRelatorio.classList.remove("hidden");
+    ativarAba("painel");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -3442,6 +3556,7 @@ function selecionarBairroNoPainel(bairro) {
   els.selBairro.value = bairro;
   contextoBairroAtual = { cidade, bairro };
   mostrarRotasDoBairro(registro);
+  salvarSessaoAtiva();
 
   const listaSugestoes = document.getElementById("listaBairrosSugestoes");
   listaSugestoes.innerHTML = "";
@@ -4131,6 +4246,7 @@ popularSelectMotivoUnico();
 
 function selecionarGaiolaParaRealocacao(codigoGaiola, botaoClicado) {
   gaiolaSelecionada = codigoGaiola;
+  salvarSessaoAtiva();
   els.rotaLista.querySelectorAll(".btn-selecionar-rota").forEach((b) => b.classList.remove("ativo"));
   botaoClicado.classList.add("ativo");
   els.realocacaoGaiolaNome.textContent = codigoGaiola;
@@ -4149,6 +4265,7 @@ function selecionarGaiolaParaRealocacao(codigoGaiola, botaoClicado) {
 
 function fecharFormularioRealocacao() {
   gaiolaSelecionada = null;
+  salvarSessaoAtiva();
   els.realocacaoForm.classList.add("hidden");
   els.realocacaoLinhas.innerHTML = "";
   document.getElementById("selMotivoUnico").value = "";
@@ -4162,6 +4279,7 @@ function fecharFormularioRealocacao() {
 
 function limparConsultaRota() {
   contextoBairroAtual = null;
+  salvarSessaoAtiva();
   els.selCidade.value = "";
   els.selBairro.value = "";
   els.selBairro.disabled = true;
@@ -4439,6 +4557,11 @@ els.inputImportarDados.addEventListener("change", () => {
 (function inicializar() {
   iniciarLoginSeNecessario();
 
+  // conecta os escutadores de cidade/bairro desde já, mesmo sem nenhum
+  // romaneio carregado ainda — importante pra quem nunca subiu um arquivo
+  // localmente e só recebe o romaneio pronto via sincronização.
+  renderizarFiltros([]);
+
   const urlSalva = obterUrlSync();
   if (urlSalva) {
     document.getElementById("inputSyncUrl").value = urlSalva;
@@ -4460,6 +4583,7 @@ els.inputImportarDados.addEventListener("change", () => {
       painel: estado.ultimoProcessamento.painel,
     });
     renderizarRomaneioBruto(estado.ultimoProcessamento.romaneioBruto);
+    restaurarSessaoAtiva();
     els.resultsSection.classList.remove("hidden");
     els.btnNovoUpload.classList.remove("hidden");
     els.btnBaixarRelatorio.classList.remove("hidden");
